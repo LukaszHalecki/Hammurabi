@@ -7,6 +7,11 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     host: true,
+    allowedHosts: ['.cursorvm.com', '.cvm.dev'],
+  },
+  preview: {
+    host: true,
+    allowedHosts: ['.cursorvm.com', '.cvm.dev'],
   },
   resolve: {
     alias: {
