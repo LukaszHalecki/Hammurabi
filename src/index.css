@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0d0b08;
+  --color-tablet: #1a1611;
+  --color-tablet-border: #33291c;
+  --color-amber: #c98a3e;
+  --color-amber-bright: #e8ab5e;
+  --color-parchment: #cbb894;
+  --color-clay-red: #a13d2b;
+  --color-nile-green: #7c8f5a;
+
+  --animate-shine: shine var(--duration) infinite linear;
+  --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
+  --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
+
+  --font-display: "Cinzel", serif;
+  --font-mono-game: "IBM Plex Mono", monospace;
+}
+
+@keyframes shine {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  to { background-position: 0% 0%; }
+}
+
+@keyframes spin-around {
+  0% { transform: translateZ(0) rotate(0); }
+  15%, 35% { transform: translateZ(0) rotate(90deg); }
+  65%, 85% { transform: translateZ(0) rotate(270deg); }
+  100% { transform: translateZ(0) rotate(360deg); }
+}
+
+@keyframes shimmer-slide {
+  to { transform: translate(calc(100cqw - 100%), 0); }
+}
+
+body {
+  background-color: var(--color-bg);
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(201, 138, 62, 0.06), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(161, 61, 43, 0.05), transparent 40%);
+  color: var(--color-parchment);
+  font-family: var(--font-mono-game);
+}
+
+.title-font { font-family: var(--font-display); letter-spacing: 0.08em; }
+
+#log-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-amber) transparent;
+}
+#log-scroll::-webkit-scrollbar { width: 6px; }
+#log-scroll::-webkit-scrollbar-thumb { background: var(--color-tablet-border); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
