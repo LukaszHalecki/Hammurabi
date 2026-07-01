@@ -7,6 +7,9 @@ function YearEntry({ entry }) {
     <BlurFade duration={0.35} offset={8}>
       <div className="py-2 border-b border-dashed border-amber/15 leading-relaxed">
         <div className="text-amber-bright font-semibold mb-1">— ROK {entry.year} —</div>
+        {entry.trades?.map((text, i) => (
+          <div key={i} className="text-parchment/80">{text}</div>
+        ))}
         {entry.starved > 0 && (
           <div className="text-clay-red">{entry.starved} osób zmarło z głodu.</div>
         )}
@@ -32,7 +35,7 @@ function YearEntry({ entry }) {
   );
 }
 
-export function LogPanel({ entries }) {
+export function EventsPanel({ entries }) {
   const scrollRef = useRef(null);
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -40,7 +43,8 @@ export function LogPanel({ entries }) {
 
   return (
     <TabletPanel className="mb-4">
-      <div id="log-scroll" ref={scrollRef} className="h-64 overflow-y-auto text-sm pr-1">
+      <h2 className="text-xs uppercase tracking-[0.2em] text-parchment/50 mb-3">Wydarzenia</h2>
+      <div id="log-scroll" ref={scrollRef} className="h-56 overflow-y-auto text-sm pr-1">
         {entries.length === 0 && (
           <div className="text-parchment/40 italic">Kadencja się rozpoczyna...</div>
         )}
