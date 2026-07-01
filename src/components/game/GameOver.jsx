@@ -12,19 +12,17 @@ const RATING_TEXT = {
 export function GameOver({ evaluation, onRestart }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="mb-4"
+      transition={{ duration: 0.3 }}
+      className="mb-2"
     >
-      <TabletPanel shine>
-        <h2 className="title-font text-amber-bright text-xl mb-2">KONIEC KADENCJI</h2>
-        <p className="mb-1">{RATING_TEXT[evaluation.rating]}</p>
-        <p className="text-sm text-parchment/80">Średni głód rocznie: {(evaluation.avgStarvation * 100).toFixed(1)}%</p>
-        <p className="text-sm text-parchment/80">Akrów na osobę: {evaluation.acresPerCapita.toFixed(1)}</p>
-        <p className="text-sm text-parchment/80 mb-4">Łącznie zmarło z głodu: {evaluation.totalStarved}</p>
-        <ShimmerButton onClick={onRestart} className="w-full py-2.5" background="#1a1611" shimmerColor="#e8ab5e">
-          <span className="text-amber-bright font-semibold text-sm">Nowa kadencja</span>
+      <TabletPanel shine compact>
+        <h2 className="title-font text-amber-bright text-sm mb-1">KONIEC KADENCJI</h2>
+        <p className="text-xs mb-1">{RATING_TEXT[evaluation.rating]}</p>
+        <p className="text-[0.65rem] text-parchment/70">Głód: {(evaluation.avgStarvation * 100).toFixed(1)}% · akr/os: {evaluation.acresPerCapita.toFixed(1)} · zmarło: {evaluation.totalStarved}</p>
+        <ShimmerButton onClick={onRestart} className="w-full py-2 mt-2" background="#1a1611" shimmerColor="#e8ab5e">
+          <span className="text-amber-bright font-semibold text-xs">Nowa kadencja</span>
         </ShimmerButton>
       </TabletPanel>
     </motion.div>

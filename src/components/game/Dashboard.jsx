@@ -3,37 +3,25 @@ import { TabletPanel } from "./TabletPanel";
 import { StatBlock } from "./StatBlock";
 
 export function Dashboard({ state }) {
-  const population = HammurabiGame.getPopulation(state);
-  const grainNeeded = HammurabiGame.getGrainNeeded(state);
+  const feed = HammurabiGame.getFeedBreakdown(state);
 
   return (
-    <TabletPanel className="mb-4" shine>
-      <h2 className="text-xs uppercase tracking-[0.2em] text-parchment/50 mb-4">Podsumowanie</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <StatBlock label="Rok" value={state.year} suffix={` / ${HammurabiGame.TOTAL_YEARS}`} />
-        <StatBlock label="Ludność" value={population} />
+    <TabletPanel className="mb-2" shine compact>
+      <h2 className="text-[0.6rem] uppercase tracking-[0.15em] text-parchment/45 mb-1.5">Podsumowanie</h2>
+      <div className="grid grid-cols-4 gap-1.5 mb-1.5">
+        <StatBlock label="Rok" value={state.year} suffix={`/${HammurabiGame.TOTAL_YEARS}`} />
         <StatBlock label="Chłopi" value={state.peasants} />
         <StatBlock label="Wojowie" value={state.warriors} />
+        <StatBlock label="Srebro" value={state.silver} />
         <StatBlock label="Akry" value={state.acres} />
         <StatBlock label="Zboże" value={state.grain} />
-        <StatBlock label="Srebro" value={state.silver} />
-        <StatBlock label="Wyżywienie / rok" value={grainNeeded} />
+        <StatBlock label="Jedzenie" value={feed.total} suffix=" /rok" />
+        <StatBlock label="Ludność" value={HammurabiGame.getPopulation(state)} />
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs border-t border-tablet-border pt-3">
-        <PriceTag label="Ziemia" value={`${state.prices.land} zboża/akr`} />
-        <PriceTag label="Zboże" value={`${state.prices.grainBuy}↓ / ${state.prices.grainSell}↑ srebra`} />
-        <PriceTag label="Chłopi" value={`${state.prices.peasantBuy}↓ / ${state.prices.peasantSell}↑`} />
-        <PriceTag label="Wojowie" value={`${state.prices.warriorBuy}↓ / ${state.prices.warriorSell}↑`} />
+      <div className="text-[0.6rem] text-parchment/40 leading-snug">
+        Wyżywienie: chłop {HammurabiGame.BUSHELS_PER_PEASANT} · woj {HammurabiGame.BUSHELS_PER_WARRIOR} buszli/os.
+        ({feed.peasants}+{feed.warriors})
       </div>
     </TabletPanel>
-  );
-}
-
-function PriceTag({ label, value }) {
-  return (
-    <div className="text-parchment/60">
-      <div className="uppercase tracking-widest text-[0.65rem] mb-0.5">{label}</div>
-      <div className="text-amber-bright/90">{value}</div>
-    </div>
   );
 }

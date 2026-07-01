@@ -1,11 +1,10 @@
 // game.js — czysta logika gry Hamurabi.
-// Zasada: (stan + decyzja gracza) -> nowy stan. Zero DOM, zero window.
 
 import { applyTrade, createEmptyTrade, normalizeTrade } from "./trade.js";
 
 const TOTAL_YEARS = 10;
-const BUSHELS_PER_PEASANT = 20;
-const BUSHELS_PER_WARRIOR = 25;
+const BUSHELS_PER_PEASANT = 15;
+const BUSHELS_PER_WARRIOR = 30;
 const BUSHELS_PER_ACRE_SEED = 0.5;
 const MAX_ACRES_PER_PEASANT = 10;
 const IMPEACHMENT_STARVATION_RATIO = 0.45;
@@ -14,17 +13,26 @@ function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function createPricePair(minSell, maxSell, markupMin = 1, markupMax = 3) {
+  const sell = randInt(minSell, maxSell);
+  const buy = sell + randInt(markupMin, markupMax);
+  return { buy, sell };
+}
+
 function createMarketPrices() {
-  const land = randInt(17, 26);
-  const grainSell = randInt(1, 3);
+  const land = createPricePair(15, 22);
+  const grain = createPricePair(2, 4);
+  const peasant = createPricePair(8, 12);
+  const warrior = createPricePair(25, 35, 2, 5);
   return {
-    land,
-    grainBuy: grainSell + randInt(1, 2),
-    grainSell,
-    peasantBuy: randInt(12, 20),
-    peasantSell: randInt(6, 10),
-    warriorBuy: randInt(35, 50),
-    warriorSell: randInt(18, 28),
+    landBuy: land.buy,
+    landSell: land.sell,
+    grainBuy: grain.buy,
+    grainSell: grain.sell,
+    peasantBuy: peasant.buy,
+    peasantSell: peasant.sell,
+    warriorBuy: warrior.buy,
+    warriorSell: warrior.sell,
   };
 }
 
@@ -55,7 +63,13 @@ function getGrainNeeded(state) {
   return state.peasants * BUSHELS_PER_PEASANT + state.warriors * BUSHELS_PER_WARRIOR;
 }
 
-// decision = { trade, feedGrain, plantAcres }
+function getFeedBreakdown(state) {
+  const peasants = state.peasants * BUSHELS_PER_PEASANT;
+  const warriors = state.warriors * BUSHELS_PER_WARRIOR;
+  return { peasants, warriors, total: peasants + warriors };
+}
+
+// decision = { trade, plantAcres }
 function playTurn(state, decision) {
   const s = { ...state };
   const events = [];
@@ -69,14 +83,7 @@ function playTurn(state, decision) {
   events.push(...tradeResult.events);
 
   let { acres, grain, peasants, warriors } = tradeResult.state;
-  const feedGrain = Math.max(0, decision.feedGrain || 0);
   const plantAcres = Math.max(0, decision.plantAcres || 0);
-
-  if (feedGrain > grain) {
-    events.push({ type: "error", text: `Nie masz aż ${feedGrain} buszli zboża na wyżywienie.` });
-    return { state: s, events };
-  }
-  grain -= feedGrain;
 
   const seedCost = plantAcres * BUSHELS_PER_ACRE_SEED;
   if (plantAcres > acres) {
@@ -110,22 +117,22 @@ function playTurn(state, decision) {
   }
 
   const grainNeeded = peasants * BUSHELS_PER_PEASANT + warriors * BUSHELS_PER_WARRIOR;
+  const feedGrain = Math.min(grain, grainNeeded);
+  grain -= feedGrain;
+
   let starved = 0;
   if (feedGrain < grainNeeded) {
     const deficit = grainNeeded - feedGrain;
-    const peasantsStarved = Math.min(
-      peasants,
-      Math.floor(deficit / BUSHELS_PER_PEASANT)
-    );
+    const peasantsStarved = Math.min(peasants, Math.floor(deficit / BUSHELS_PER_PEASANT));
     const remainingDeficit = deficit - peasantsStarved * BUSHELS_PER_PEASANT;
-    const warriorsStarved = Math.min(
-      warriors,
-      Math.ceil(remainingDeficit / BUSHELS_PER_WARRIOR)
-    );
-    const totalStarved = Math.min(getPopulation(tradeResult.state), peasantsStarved + warriorsStarved);
-    starved = totalStarved;
+    const warriorsStarved = Math.min(warriors, Math.ceil(remainingDeficit / BUSHELS_PER_WARRIOR));
+    starved = Math.min(getPopulation(tradeResult.state), peasantsStarved + warriorsStarved);
     peasants = Math.max(0, peasants - peasantsStarved);
     warriors = Math.max(0, warriors - warriorsStarved);
+    events.push({
+      type: "famine",
+      text: `Brak zboża na wyżywienie — ${starved} osób zmarło z głodu.`,
+    });
   }
 
   const populationBefore = getPopulation(tradeResult.state);
@@ -156,10 +163,8 @@ function playTurn(state, decision) {
   const populationAfterStarvation = peasants + warriors;
   if (populationAfterStarvation > 0 && Math.random() < 0.15) {
     plague = true;
-    const plaguePeasants = Math.floor(peasants / 2);
-    const plagueWarriors = Math.floor(warriors / 2);
-    peasants = plaguePeasants;
-    warriors = plagueWarriors;
+    peasants = Math.floor(peasants / 2);
+    warriors = Math.floor(warriors / 2);
     events.push({ type: "plague", text: "Zaraza nawiedziła miasto! Połowa ludności zmarła." });
   }
 
@@ -190,8 +195,8 @@ function playTurn(state, decision) {
 
   events.push({
     type: "harvest",
-    text: `Rok ${s.year}: zebrano ${yieldPerAcre} buszli/akr (${harvested} razem).`,
-    data: { yieldPerAcre, harvested, ratsAte, starved, immigrants },
+    text: `Rok ${s.year}: zebrano ${yieldPerAcre} buszli/akr (${harvested} razem). Wyżywiono lud za ${feedGrain} buszli.`,
+    data: { yieldPerAcre, harvested, ratsAte, starved, immigrants, feedGrain },
   });
 
   return { state: newState, events };
@@ -225,6 +230,7 @@ export const HammurabiGame = {
   evaluateGame,
   getPopulation,
   getGrainNeeded,
+  getFeedBreakdown,
   TOTAL_YEARS,
   BUSHELS_PER_PEASANT,
   BUSHELS_PER_WARRIOR,

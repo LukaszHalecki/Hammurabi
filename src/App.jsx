@@ -56,13 +56,13 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
-      <Particles className="absolute inset-0 -z-10" quantity={70} color="#c98a3e" size={0.5} ease={70} />
+    <div className="min-h-screen flex items-start justify-center p-2 md:p-4 relative overflow-hidden">
+      <Particles className="absolute inset-0 -z-10" quantity={50} color="#c98a3e" size={0.4} ease={70} />
 
-      <main className="w-full max-w-3xl relative">
-        <header className="text-center mb-6">
-          <h1 className="title-font text-4xl md:text-5xl text-amber-100">HAMURABI</h1>
-          <p className="text-sm text-parchment/60 mt-1">Rządź Sumerem przez 10 lat. Handluj mądrze, nie dopuść do głodu.</p>
+      <main className="w-full max-w-lg relative py-2">
+        <header className="text-center mb-2">
+          <h1 className="title-font text-2xl md:text-3xl text-amber-100">HAMURABI</h1>
+          <p className="text-[0.65rem] text-parchment/50">Rządź Sumerem · handluj · nie głódź ludu</p>
         </header>
 
         <Dashboard state={state} />

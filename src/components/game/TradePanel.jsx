@@ -1,154 +1,133 @@
 import { useMemo, useState } from "react";
-import { COMMODITIES, createEmptyTrade, getTradeSummary } from "@/game/trade";
+import {
+  COMMODITIES,
+  createEmptyTrade,
+  getMaxBuy,
+  getMaxSell,
+  getTradeSummary,
+} from "@/game/trade";
 import { HammurabiGame } from "@/game/hammurabiEngine";
 import { ShimmerButton } from "@/components/magicui/shimmer-button";
 import { TabletPanel } from "./TabletPanel";
 
-const CURRENCY_LABEL = {
-  grain: "zboże",
-  silver: "srebro",
-};
+function TradeSlider({ label, value, max, price, onChange, tone }) {
+  const cost = value * price;
+  return (
+    <div className="space-y-0.5">
+      <div className="flex justify-between text-[0.6rem] text-parchment/50">
+        <span>{label}</span>
+        <span className={tone}>{value} · {cost} ⊙</span>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value, 10))}
+        className="game-slider w-full"
+        disabled={max === 0}
+      />
+    </div>
+  );
+}
 
-function TradeRow({ commodity, state, values, onChange }) {
+function TradeTile({ commodity, state, values, onChange }) {
   const stock = state[commodity.stockKey];
-  const buyPrice = state.prices[commodity.priceKey];
-  const sellPrice = state.prices[commodity.sellPriceKey];
-  const currency = CURRENCY_LABEL[commodity.currency];
+  const buyPrice = state.prices[commodity.buyKey];
+  const sellPrice = state.prices[commodity.sellKey];
+  const maxBuy = getMaxBuy(state, commodity);
+  const maxSell = getMaxSell(state, commodity);
+
+  const setBuy = (buy) => onChange({ buy, sell: buy > 0 ? 0 : values.sell });
+  const setSell = (sell) => onChange({ buy: sell > 0 ? 0 : values.buy, sell });
 
   return (
-    <div className="grid grid-cols-[1fr_auto_auto] md:grid-cols-[1.2fr_1fr_1fr_1fr] gap-3 items-end py-3 border-b border-dashed border-amber/10 last:border-0">
-      <div>
-        <div className="text-amber-bright font-medium">{commodity.label}</div>
-        <div className="text-[0.7rem] text-parchment/50 mt-0.5">
-          Posiadasz: {stock} {commodity.unit}
-        </div>
-        <div className="text-[0.7rem] text-parchment/40">
-          Kupno {buyPrice} {currency} · Sprzedaż {sellPrice} {currency}
-        </div>
+    <div className="rounded border border-tablet-border bg-bg/25 p-2 space-y-1.5">
+      <div className="flex justify-between items-baseline gap-1">
+        <span className="text-xs text-amber-bright font-medium">{commodity.label}</span>
+        <span className="text-[0.6rem] text-parchment/45">{stock} {commodity.unit}</span>
       </div>
-
-      <label className="text-xs block">
-        <span className="block mb-1 uppercase tracking-widest text-[0.65rem] text-parchment/60">Kup</span>
-        <input
-          type="number"
-          min="0"
-          value={values.buy}
-          onChange={(e) => onChange("buy", e.target.value)}
-          className="w-full px-2 py-1.5 rounded bg-bg border border-tablet-border text-amber-bright focus:outline-none focus:border-amber focus:ring-2 focus:ring-amber/20"
-        />
-      </label>
-
-      <label className="text-xs block">
-        <span className="block mb-1 uppercase tracking-widest text-[0.65rem] text-parchment/60">Sprzedaj</span>
-        <input
-          type="number"
-          min="0"
-          value={values.sell}
-          onChange={(e) => onChange("sell", e.target.value)}
-          className="w-full px-2 py-1.5 rounded bg-bg border border-tablet-border text-amber-bright focus:outline-none focus:border-amber focus:ring-2 focus:ring-amber/20"
-        />
-      </label>
+      <div className="text-[0.55rem] text-parchment/40">
+        kup {buyPrice} ⊙ · sprzedaj {sellPrice} ⊙
+      </div>
+      <TradeSlider
+        label="Kup"
+        value={values.buy}
+        max={maxBuy}
+        price={buyPrice}
+        onChange={setBuy}
+        tone="text-amber-bright/80"
+      />
+      <TradeSlider
+        label="Sprzedaj"
+        value={values.sell}
+        max={maxSell}
+        price={sellPrice}
+        onChange={setSell}
+        tone="text-nile-green/80"
+      />
     </div>
   );
 }
 
 export function TradePanel({ state, onSubmit, error }) {
   const [trade, setTrade] = useState(createEmptyTrade);
-  const [feedGrain, setFeedGrain] = useState(0);
   const [plantAcres, setPlantAcres] = useState(0);
 
   const summary = useMemo(() => getTradeSummary(state, trade), [state, trade]);
-  const grainNeeded = HammurabiGame.getGrainNeeded(state);
-
-  const handleTradeChange = (id, field, value) => {
-    const amount = Math.max(0, parseInt(value, 10) || 0);
-    setTrade((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], [field]: amount },
-    }));
-  };
+  const maxPlant = Math.min(state.acres, state.peasants * HammurabiGame.MAX_ACRES_PER_PEASANT);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ trade, feedGrain, plantAcres });
+    onSubmit({ trade, plantAcres });
     setTrade(createEmptyTrade());
-    setFeedGrain(0);
     setPlantAcres(0);
   };
 
-  const suggestFeed = () => setFeedGrain(grainNeeded);
-  const suggestPlant = () => setPlantAcres(Math.min(state.acres, state.peasants * HammurabiGame.MAX_ACRES_PER_PEASANT));
-
   return (
-    <TabletPanel>
-      <h2 className="text-xs uppercase tracking-[0.2em] text-parchment/50 mb-1">Handel</h2>
-      <p className="text-xs text-parchment/40 mb-4">
-        Ziemię płacisz zbożem. Zboże, chłopów i wojowników rozliczasz srebrem ze skarbca.
-      </p>
+    <TabletPanel compact>
+      <h2 className="text-[0.6rem] uppercase tracking-[0.15em] text-parchment/45 mb-1">Handel</h2>
+      <p className="text-[0.6rem] text-parchment/35 mb-2">Wszystko za srebro. Zakup zawsze droższy niż sprzedaż.</p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <div className="text-clay-red text-sm">{error}</div>}
+      <form onSubmit={handleSubmit} className="space-y-2">
+        {error && <div className="text-clay-red text-[0.7rem]">{error}</div>}
 
-        <div>
+        <div className="grid grid-cols-2 gap-1.5">
           {COMMODITIES.map((commodity) => (
-            <TradeRow
+            <TradeTile
               key={commodity.id}
               commodity={commodity}
               state={state}
               values={trade[commodity.id]}
-              onChange={(field, value) => handleTradeChange(commodity.id, field, value)}
+              onChange={(next) => setTrade((prev) => ({ ...prev, [commodity.id]: next }))}
             />
           ))}
         </div>
 
-        <div className="rounded border border-tablet-border bg-bg/40 p-3 text-xs text-parchment/70 space-y-1">
-          <div>Saldo po handlu:</div>
-          <div className={summary.grainAfter < 0 ? "text-clay-red" : "text-amber-bright"}>
-            Zboże: {state.grain} → {summary.grainAfter} buszli
-          </div>
-          <div className={summary.silverAfter < 0 ? "text-clay-red" : "text-amber-bright"}>
-            Srebro: {state.silver} → {summary.silverAfter}
-          </div>
+        <div className="flex justify-between text-[0.65rem] px-1 py-1 rounded bg-bg/30 border border-tablet-border/60">
+          <span className="text-parchment/50">Srebro po handlu</span>
+          <span className={summary.silverAfter < 0 ? "text-clay-red" : "text-amber-bright"}>
+            {state.silver} → {summary.silverAfter} ⊙
+          </span>
         </div>
 
-        <div className="border-t border-tablet-border pt-4">
-          <h3 className="text-xs uppercase tracking-[0.2em] text-parchment/50 mb-3">Zarządzanie rokiem</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="text-xs block">
-              <span className="block mb-1 uppercase tracking-widest text-[0.65rem] text-parchment/60">
-                Zboże na wyżywienie
-                <button type="button" onClick={suggestFeed} className="ml-2 text-amber/70 hover:text-amber">
-                  (min. {grainNeeded})
-                </button>
-              </span>
-              <input
-                type="number"
-                min="0"
-                value={feedGrain}
-                onChange={(e) => setFeedGrain(parseInt(e.target.value, 10) || 0)}
-                className="w-full px-2 py-1.5 rounded bg-bg border border-tablet-border text-amber-bright focus:outline-none focus:border-amber focus:ring-2 focus:ring-amber/20"
-              />
-            </label>
-            <label className="text-xs block">
-              <span className="block mb-1 uppercase tracking-widest text-[0.65rem] text-parchment/60">
-                Akrów do obsiania
-                <button type="button" onClick={suggestPlant} className="ml-2 text-amber/70 hover:text-amber">
-                  (max)
-                </button>
-              </span>
-              <input
-                type="number"
-                min="0"
-                value={plantAcres}
-                onChange={(e) => setPlantAcres(parseInt(e.target.value, 10) || 0)}
-                className="w-full px-2 py-1.5 rounded bg-bg border border-tablet-border text-amber-bright focus:outline-none focus:border-amber focus:ring-2 focus:ring-amber/20"
-              />
-            </label>
+        <div className="rounded border border-tablet-border bg-bg/25 p-2">
+          <div className="flex justify-between text-[0.6rem] text-parchment/50 mb-1">
+            <span>Zasiew (akr)</span>
+            <span>{plantAcres} / {maxPlant}</span>
           </div>
+          <input
+            type="range"
+            min={0}
+            max={maxPlant}
+            value={plantAcres}
+            onChange={(e) => setPlantAcres(parseInt(e.target.value, 10))}
+            className="game-slider w-full"
+          />
         </div>
 
-        <ShimmerButton type="submit" className="w-full py-2.5" background="#1a1611" shimmerColor="#e8ab5e">
-          <span className="text-amber-bright font-semibold text-sm">Zatwierdź handel i przejdź rok</span>
+        <ShimmerButton type="submit" className="w-full py-2" background="#1a1611" shimmerColor="#e8ab5e">
+          <span className="text-amber-bright font-semibold text-xs">Zatwierdź rok</span>
         </ShimmerButton>
       </form>
     </TabletPanel>

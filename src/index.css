@@ -54,6 +54,38 @@ body {
 #log-scroll::-webkit-scrollbar { width: 6px; }
 #log-scroll::-webkit-scrollbar-thumb { background: var(--color-tablet-border); }
 
+.game-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-tablet-border);
+  outline: none;
+}
+
+.game-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-amber);
+  border: 1px solid var(--color-amber-bright);
+  cursor: pointer;
+}
+
+.game-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-amber);
+  border: 1px solid var(--color-amber-bright);
+  cursor: pointer;
+}
+
+.game-slider:disabled {
+  opacity: 0.35;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
